@@ -54,36 +54,55 @@ if (!app.homeScreenVisible) {
 			numberOfLayers=layers.length-1
 		}
 
-		for (a=0; a<numberOfLayers; a++){
-			hideLayers();
-			layers[a].visible=true;
-			exportTo(layers[a].name, resolution, format, antiAliasingC.value, clipArtboardC.value);
+		if (format==".png"){
+			for (a=0; a<numberOfLayers; a++){
+				hideLayers();
+				layers[a].visible=true;
+				exportAsPNG(layers[a].name, resolution, antiAliasingC.value, clipArtboardC.value);
+			}
+		} else {
+			for (a=0; a<numberOfLayers; a++){
+				hideLayers();
+				layers[a].visible=true;
+				exportAsJPEG(layers[a].name, resolution, antiAliasingC.value, clipArtboardC.value);
+			}
 		}
 	}
 
-	function exportTo (curentLayer, resolution, format, antiAliasing, clipArtboard) {
+	function exportAsPNG (curentLayer, resolution, antiAliasing, clipArtboard) {
 		var exportOptions = new ImageCaptureOptions();
 		exportOptions.antiAliasing = antiAliasing;
 		exportOptions.qualitySetting = 100;
 		exportOptions.resolution = resolution
-		if (format==".png"){
-			exportOptions.transparency=true
-		}
-	
+		exportOptions.transparency=true
+		
 		var indexAA = app.activeDocument.artboards.getActiveArtboardIndex (),
 	        activeArtboard = app.activeDocument.artboards[indexAA]
 
-		var rect;
-		if (clipArtboard){
-			rect = activeArtboard.artboardRect
-		} else {
-			rect = app.activeDocument.geometricBounds
-		}
+		var rect = defineArtboard(clipArtboard)
 
-		var fileSpec = new File(docPath+'/'+curentLayer+format);
+		var fileSpec = new File(docPath+'/'+curentLayer+".png");
 	
 		app.activeDocument.imageCapture(fileSpec, rect, exportOptions);
 	}
+
+	function exportAsJPEG (curentLayer, resolution, antiAliasing, clipArtboard) {
+		var exportOptions = new ExportOptionsJPEG();
+		var type = ExportType.JPEG;
+		exportOptions.antiAliasing = antiAliasing;
+		exportOptions.qualitySetting = 100;
+		exportOptions.artBoardClipping = false;
+		exportOptions.horizontalScale = resolution*100/72;
+		exportOptions.verticalScale = resolution*100/72;
+    	exportOptions.artBoardClipping = clipArtboard
+
+		var fileSpec = new File(docPath+'/'+curentLayer);
+
+		app.activeDocument.exportFile( fileSpec, type, exportOptions );
+
+	}
+
+
 
 	function hideLayers(){
 		if (!keepBgC.value){
@@ -97,7 +116,19 @@ if (!app.homeScreenVisible) {
 		}
 	}
 
-	
+	function defineArtboard(clipArtboard){
+		var indexAA = app.activeDocument.artboards.getActiveArtboardIndex (),
+		activeArtboard = app.activeDocument.artboards[indexAA]
+
+		var rect;
+		if (clipArtboard){
+			rect = activeArtboard.artboardRect
+		} else {
+			rect = app.activeDocument.geometricBounds
+		}
+
+		return rect
+	}
 
 } else {
 	alert("Please open the document first")
